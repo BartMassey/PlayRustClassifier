@@ -1,7 +1,3 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
-
-
 #[macro_export]
 macro_rules! time {
     ($expression:expr) => (
@@ -27,20 +23,15 @@ macro_rules! time {
 }
 
 
-#[macro_use(stack)]
 extern crate ndarray;
-#[macro_use]
 extern crate lazy_static;
-
 extern crate bincode;
 extern crate clap;
 extern crate csv;
 extern crate serde;
-extern crate hyper;
 extern crate rayon;
 extern crate regex;
 extern crate rustlearn;
-extern crate rustc_serialize;
 extern crate serde_json;
 extern crate stopwatch;
 extern crate tiny_keccak;
@@ -51,4 +42,5 @@ pub mod feature_extraction;
 pub mod reddit;
 pub mod util;
 
+pub use ndarray::prelude::*;
 pub use stopwatch::Stopwatch;

@@ -28,7 +28,8 @@ fn main() {
 
     // let mut raw_posts = Vec::with_capacity(1000);
 
-    let mut wtr = csv::Writer::from_file(format!("./{}.csv", sub)).unwrap();
+    let path = format!("./{}.csv", sub);
+    let mut wtr = csv::Writer::from_path(&path).unwrap();
     let mut after = None;
 
     loop {
@@ -37,7 +38,7 @@ fn main() {
         after = new_after;
         let posts = get_posts(features);
         for record in posts.into_iter() {
-            let _ = wtr.encode(record);
+            let _ = wtr.serialize(record);
         }
 
         if after.is_none() {

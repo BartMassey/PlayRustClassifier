@@ -1,14 +1,9 @@
-#![feature(test, custom_derive, plugin)]
-
-#[macro_use(time)]
 extern crate playrust_alert;
+use playrust_alert::time;
 
 extern crate clap;
 extern crate csv;
-extern crate rustc_serialize;
 extern crate rustlearn;
-
-use clap::{Arg, App};
 
 use playrust_alert::reddit::{RawPostFeatures, ProcessedPostFeatures, get_posts, RedditClient};
 use playrust_alert::feature_extraction::{convert_author_to_popularity, convert_is_self,
@@ -107,6 +102,7 @@ fn construct_matrix(post_features: &[ProcessedPostFeatures]) -> Array {
     features
 }
 
+/*
 fn get_pred_data() -> Vec<RawPostFeatures> {
     let matches = App::new("PlayRust Predictor")
                       .version("1.0")
@@ -119,9 +115,9 @@ fn get_pred_data() -> Vec<RawPostFeatures> {
 
     let pred_path = matches.value_of("pred").unwrap();
 
-    let mut rdr = csv::Reader::from_file(pred_path).unwrap();
+    let mut rdr = csv::Reader::from_path(pred_path).unwrap();
 
-    rdr.decode()
+    rdr.deserialize()
        .map(|raw_post| raw_post.unwrap())
        .collect()
 }
@@ -145,6 +141,7 @@ fn get_pred_data() -> Vec<RawPostFeatures> {
 //
 //     Ok(Response::from(&sub))
 // }
+*/
 
 fn main() {
 

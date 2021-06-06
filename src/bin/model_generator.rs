@@ -1,17 +1,12 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
-#![feature(test)]
-
-#[macro_use(time)]
 extern crate playrust_alert;
+use playrust_alert::time;
 
 extern crate clap;
 extern crate csv;
 extern crate dedup_by;
-extern crate rand;
+// extern crate rand;
 extern crate rayon;
 extern crate rustlearn;
-extern crate rustc_serialize;
 extern crate serde_json;
 extern crate stopwatch;
 
@@ -33,8 +28,13 @@ use rustlearn::trees::decision_tree;
 use rustlearn::ensemble::random_forest::Hyperparameters;
 use rustlearn::metrics::accuracy_score;
 
-use rand::{thread_rng, Rng, StdRng, SeedableRng};
+use rand::prelude::*;
 
+fn std_rng() -> StdRng {
+    let mut seed = [0; 32];
+    seed[0] = 100;
+    StdRng::from_seed(seed)
+}
 
 fn get_train_data() -> Vec<RawPostFeatures> {
     let matches = App::new("Model Generator")
@@ -48,9 +48,9 @@ fn get_train_data() -> Vec<RawPostFeatures> {
 
     let train_path = matches.value_of("train").unwrap();
 
-    let mut rdr = csv::Reader::from_file(train_path).unwrap();
+    let mut rdr = csv::Reader::from_path(train_path).unwrap();
 
-    let posts: Vec<RawPostFeatures> = rdr.decode()
+    let posts: Vec<RawPostFeatures> = rdr.deserialize()
                                          .map(|raw_post| raw_post.unwrap())
                                          .collect();
 
@@ -167,10 +167,10 @@ fn construct_matrix(post_features: &[ProcessedPostFeatures]) -> Array {
 fn main() {
     // Deserialize raw reddit post features from an input file, deduplicate by the title, and
     // then shuffle them.
-    let mut posts: Vec<_> = {
+    let posts: Vec<_> = {
         let mut posts = get_train_data();
         let mut rng = thread_rng();
-        rng.shuffle(&mut posts);
+        posts.shuffle(&mut rng);
         // posts.into_iter().take(10).collect()
         posts
     };
@@ -181,7 +181,7 @@ fn main() {
     let tree_params = decision_tree::Hyperparameters::new(feat_matrix.cols());
 
     let mut model = Hyperparameters::new(tree_params, 10)
-                        .rng(StdRng::from_seed(&[100]))
+                        .rng(std_rng())
                         .one_vs_rest();
 
     model.fit_parallel(&feat_matrix, &ground_truth, 8).unwrap();
@@ -190,7 +190,7 @@ fn main() {
     let no_splits = 10;
 
     let mut cv = CrossValidation::new(feat_matrix.rows(), no_splits);
-    cv.set_rng(StdRng::from_seed(&[100]));
+    cv.set_rng(std_rng());
 
     let mut test_accuracy = 0.0;
     for (train_idx, test_idx) in cv {

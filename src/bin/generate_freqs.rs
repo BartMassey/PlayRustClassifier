@@ -1,19 +1,10 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
-
-#[macro_use(time)]
 extern crate playrust_alert;
-
-#[macro_use(stack)]
 extern crate ndarray;
-
 extern crate clap;
 extern crate csv;
 extern crate dedup_by;
 extern crate rand;
 extern crate rayon;
-extern crate rsml;
-extern crate rustc_serialize;
 extern crate serde_json;
 extern crate stopwatch;
 extern crate tfidf;
@@ -21,7 +12,6 @@ extern crate tfidf;
 use clap::{Arg, App};
 use dedup_by::dedup_by;
 use playrust_alert::reddit::RawPostFeatures;
-use rsml::tfidf_helper::get_unique_word_list;
 
 use std::collections::BTreeMap;
 
@@ -37,9 +27,9 @@ fn get_train_data() -> Vec<RawPostFeatures> {
 
     let train_path = matches.value_of("train").unwrap();
 
-    let mut rdr = csv::Reader::from_file(train_path).unwrap();
+    let mut rdr = csv::Reader::from_path(train_path).unwrap();
 
-    let mut posts: Vec<RawPostFeatures> = rdr.decode()
+    let mut posts: Vec<RawPostFeatures> = rdr.deserialize()
                                              .map(|raw_post| raw_post.unwrap())
                                              .collect();
 
@@ -49,13 +39,18 @@ fn get_train_data() -> Vec<RawPostFeatures> {
 }
 
 
+// This function is lost in the mists of time. It was originally
+// part of the long-dead `rsml` crate, but apparently in some branch
+// that never made it to `crates.io`. Who knows?
+fn get_unique_word_list(_post: &str) -> Vec<String> {
+    todo!()
+}
+
 fn word_freqs(posts: &[RawPostFeatures]) -> BTreeMap<String, u64> {
     let mut map = BTreeMap::new();
 
     for post in posts {
-        let post = vec![post.selftext.as_str()];
-
-        for word in get_unique_word_list(&post[..]) {
+        for word in get_unique_word_list(post.selftext.as_str()) {
             *map.entry(word).or_insert(0) += 1;
         }
     }
@@ -64,7 +59,7 @@ fn word_freqs(posts: &[RawPostFeatures]) -> BTreeMap<String, u64> {
 
 fn main() {
     let posts = get_train_data();
-    let (rust, play): (Vec<RawPostFeatures>, Vec<RawPostFeatures>) = posts.into_iter()
+    let (rust, _play): (Vec<RawPostFeatures>, Vec<RawPostFeatures>) = posts.into_iter()
                                                                           .partition(|post| {
                                                                               post.subreddit ==
                                                                               "rust"

@@ -1,11 +1,12 @@
-use hyper::Client;
+use reqwest::blocking::Client;
 use rayon::prelude::*;
 use serde_json;
 use serde_json::Value;
+use serde::{Serialize, Deserialize};
 use std::io::prelude::*;
-use tiny_keccak::Keccak;
+use tiny_keccak::{Keccak, Hasher};
 
-#[derive(Deserialize, Debug, Clone, RustcEncodable, RustcDecodable)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RawPostFeatures {
     pub is_self: bool,
     pub author: String,
@@ -18,7 +19,7 @@ pub struct RawPostFeatures {
     pub title: String,
 }
 
-#[derive(Debug, Clone, RustcEncodable)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProcessedPostFeatures {
     /// 0 if self, 1 if not self
     pub is_self: f32,
@@ -57,7 +58,7 @@ pub fn get_posts(data: Vec<serde_json::Value>) -> Vec<RawPostFeatures> {
     let mut raw_features = Vec::with_capacity(data.len());
     data.par_iter()
         .map(|data| feature_from_value(data))
-        .collect_into(&mut raw_features);
+        .collect_into_vec(&mut raw_features);
     raw_features
 }
 
@@ -69,8 +70,7 @@ impl RedditClient {
 
     pub fn get_raw_features_from_url(&mut self, url: &str) -> Vec<serde_json::Value> {
         let query = format!("{}.json", url);
-
-        let mut res = self.client.get(&query).send().unwrap();
+        let mut res = self.client.get(query).send().unwrap();
 
         let body = {
             let mut s = String::new();
@@ -138,7 +138,7 @@ impl RedditClient {
 }
 
 pub fn anonymize_author(author: &str, iter: u64, key: &[u8]) -> String {
-    let mut sha3 = Keccak::new_sha3_512();
+    let mut sha3 = Keccak::v512();
 
     let mut res: [u8; 512] = [0; 512];
     let authbytes: Vec<u8> = From::from(author);
@@ -148,7 +148,7 @@ pub fn anonymize_author(author: &str, iter: u64, key: &[u8]) -> String {
     sha3.finalize(&mut res);
 
     for _ in 0..iter {
-        let mut sha3 = Keccak::new_sha3_512();
+        let mut sha3 = Keccak::v512();
         sha3.update(&res);
         sha3.update(&key);
         sha3.finalize(&mut res);

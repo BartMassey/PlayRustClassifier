@@ -1,9 +1,6 @@
 use ndarray::{ArrayBase, Dimension, ViewRepr};
-
-use rustc_serialize::{Encodable, Decodable};
-
-use bincode::SizeLimit;
-use bincode::rustc_serialize::{encode, decode};
+use serde::{Serialize, de::DeserializeOwned};
+use bincode::{serialize_into, deserialize_from};
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -28,42 +25,32 @@ pub fn load_list(path: &str) -> Vec<String> {
 }
 
 pub fn write_ndarray<T: Dimension>(nd: ArrayBase<ViewRepr<&f64>, T>, path: &str) {
-    let mut wtr = Writer::from_file(format!("./data/{}.csv", path)).unwrap();
-    // wtr.encode(nd);
-    for record in nd.inner_iter() {
-        let _ = wtr.encode(record);
+    let mut wtr = Writer::from_path(format!("./data/{}.csv", path)).unwrap();
+    for record in nd.rows() {
+        wtr.serialize(record.as_slice()).expect("could not write");
     }
 }
 
-pub fn write_csv_vec<T: Encodable>(v: &[Vec<T>], path: &str) {
-    let mut wtr = Writer::from_file(path).unwrap();
+pub fn write_csv_vec<T: Serialize>(v: &[Vec<T>], path: &str) {
+    let mut wtr = Writer::from_path(path).unwrap();
     for record in v {
-        let _ = wtr.encode(record);
+        wtr.serialize(&record).expect("could not write");
     }
 }
 
-pub fn write_csv<T: Encodable>(nd: &T, path: &str) {
-    let mut wtr = Writer::from_file(path).unwrap();
-    wtr.encode(nd);
-    // for record in nd.inner_iter() {
-    //     let _ = wtr.encode(record);
-    // }
+pub fn write_csv<T: Serialize>(nd: &T, path: &str) {
+    let mut wtr = Writer::from_path(path).unwrap();
+    wtr.serialize(nd).expect("could not write");
 }
 
-pub fn deserialize_from_file<T: Decodable>(path: &str) -> T {
-    let mut f = File::open(path).unwrap();
-    let mut encoded = Vec::new();
-
-    let _ = f.read_to_end(&mut encoded).unwrap();
-    decode(&encoded[..]).unwrap()
+pub fn deserialize_from_file<'a, T: DeserializeOwned>(path: &'a str) -> T {
+    let f = File::open(path).unwrap();
+    deserialize_from(f).expect("could not read")
 }
 
 pub fn serialize_to_file<T>(s: &T, path: &str)
-    where T: Encodable
+    where T: Serialize
 {
-    let serialized: Vec<u8> = encode(&s, SizeLimit::Infinite).unwrap();
-
-    let mut f = File::create(path).unwrap();
-    let _ = f.write_all(&serialized[..]);
-    f.flush().unwrap();
+    let f = File::create(path).unwrap();
+    serialize_into(f, s).expect("could not write");
 }
