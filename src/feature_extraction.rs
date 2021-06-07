@@ -80,10 +80,14 @@ fn bool_to_f32(b: bool) -> f32 {
 
 pub fn check_for_code(self_texts: &[&str]) -> Vec<Vec<f32>> {
     lazy_static! {
-        static ref FN_REGEX: Regex = Regex::new(r".*fn [:alpha:]{1}[:word:]*\(.*\)").expect("fn_regex");
-        static ref LET_REGEX: Regex = Regex::new(r".*let( mut)? [:alpha:]{1}[:word:]*.* = .*;").expect("let_regex");
-        static ref IF_LET_REGEX: Regex = Regex::new(r".*if let .* = match").expect("if_let_regex");
-        static ref MACRO_REGEX: Regex = Regex::new(r".*[:alpha:]{1}[:word:]*! {0,1}[\{\(\[].*[\)\]\}]").expect("macro_regex");
+        static ref FN_REGEX: Regex =
+            Regex::new(r#".*fn [[:alpha:]]{1}[[:word:]]*\(.*\)"#).expect("fn_regex");
+        static ref LET_REGEX: Regex =
+            Regex::new(r#".*let( mut)? [[:alpha:]]{1}[[:word:]]*.* = .*;"#).expect("let_regex");
+        static ref IF_LET_REGEX: Regex =
+            Regex::new(r#".*if let .* = match"#).expect("if_let_regex");
+        static ref MACRO_REGEX: Regex =
+            Regex::new(r#".*[[:alpha:]]{1}[[:word:]]*! {0,1}[{(\[].*[)\]}]"#).expect("macro_regex");
     }
 
     self_texts.iter()
@@ -249,34 +253,29 @@ pub fn subs_to_float(subs: &[&str]) -> Vec<f32> {
 mod tests {
     use super::*;
 
+    const CODE_MSG: &str =
+        r#"Hey I need help with this function:
+           
+           pub fn get_stuff1(thing: &str) -> String {
+               let mut x: Option<_> = {Some("False")};
+
+               if let Some(s) = match x {
+                   println!("{:?}", s);
+               }
+
+               return x;
+           }"#;
+
     #[test]
     fn test_rust_code_search() {
-        let texts = vec!["Hey I need help with this function: pub fn get_stuff1(thing: &str) -> \
-                          String {
-                          let mut x: Option<_> = {Some(\"False\")};
-
-                          if let Some(s) = match x {
-                              println!(\"{:?}\", s);
-                          }
-
-                          return x;
-                        }"];
+        let texts = vec![CODE_MSG];
         let r = check_for_code(&texts[..]);
         assert_eq!(r[0], vec![1f32, 1f32, 1f32, 1f32]);
     }
 
     #[test]
     fn test_symbol_freq() {
-        let texts = vec!["Hey I need help with this function: pub fn get_stuff1(thing: &str) -> \
-                          String {
-                          let mut x: Option<_> = {Some(\"False\")};
-
-                          if let Some(s) = match x {
-                              println!(\"{:?}\", s);
-                          }
-
-                          return x;
-                        }"];
+        let texts = vec![CODE_MSG];
         let s = symbol_counts(&texts[..]);
         assert_eq!(s[0],
                    vec![2f32, 1f32, 3f32, 4f32, 1f32, 1f32, 0f32, 4f32, 4f32, 0f32, 0f32, 4f32,
