@@ -8,11 +8,12 @@ that were intended for the
 # Status Chart
 
 * [x] Compile with `rustc` 1.51 with current dependencies.
-* [ ] Upstream fixes to `rustlearn` to get off the current
-      [vendor branch](/BartMassey-upstream/rustlearn).
-* [ ] Replace missing `get_unique_word_list()` function in
+* [x] Make this thing pass all its own tests.
+* [x] Replace missing `get_unique_word_list()` function in
       `generate_freqs.rs`, forever lost to an unported version
       of the `rsml` crate.
+* [ ] Upstream fixes to `rustlearn` to get off the current
+      [vendor branch](/BartMassey-upstream/rustlearn).
 * [ ] Find/build corpora and try this thing out.
 
 ---
