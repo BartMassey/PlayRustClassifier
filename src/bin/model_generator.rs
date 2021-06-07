@@ -212,7 +212,6 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::playrust_alert::feature_extraction::subs_to_float;
     #[test]
     fn test_subs_to_float() {
