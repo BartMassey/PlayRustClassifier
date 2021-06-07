@@ -109,9 +109,9 @@ fn depluralize(s: &str) -> &str {
 
 fn should_replace(c: u8) -> bool {
     match c {
-        97..=122 => true,
-        65..=90 => true,
-        _ => false,
+        b'a'..=b'z' => false,
+        b'A'..=b'Z' => false,
+        _ => true,
     }
 }
 
@@ -176,13 +176,12 @@ pub fn get_words(sentence: &str) -> Vec<String> {
     let cleaned = unsafe { String::from_utf8_unchecked(cleaned) };
     let cleaned = cleaned.to_lowercase();
 
-
     cleaned.split_whitespace()
-           .filter(|s| 2 < s.len() && s.len() < 10)
-           .map(|s| depluralize(s))
-           .filter(|s| 2 < s.len())
-           .map(String::from)
-           .collect()
+        .filter(|s| 2 < s.len() && s.len() < 10)
+        .map(|s| depluralize(s))
+        .filter(|s| 2 < s.len())
+        .map(String::from)
+        .collect()
 }
 
 
@@ -215,9 +214,10 @@ pub fn interesting_word_freq(self_texts: &[&str], spec_words: &[String]) -> Vec<
             }
         }
 
-        let freq_vec: Vec<_> = freq_map.values()
-                                       .cloned()
-                                       .collect();
+        let freq_vec: Vec<_> = spec_words
+            .iter()
+            .map(|w| freq_map[w])
+            .collect();
 
         freq_matrix.push(freq_vec);
     }
@@ -302,7 +302,7 @@ mod tests {
                                      "orange".to_owned(),
                                      "quickly".to_owned()];
 
-        let expected = vec![1f32, 2f32, 0f32, 1f32, 0f32];
+        let expected = vec![1f32, 0f32, 2f32, 0f32, 1f32];
 
         let frequencies = interesting_word_freq(&texts[..], &interesting_words[..]);
 

@@ -13,7 +13,7 @@ use clap::{Arg, App};
 use dedup_by::dedup_by;
 use playrust_alert::reddit::RawPostFeatures;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeSet, BTreeMap};
 
 fn get_train_data() -> Vec<RawPostFeatures> {
     let matches = App::new("Model Generator")
@@ -42,8 +42,14 @@ fn get_train_data() -> Vec<RawPostFeatures> {
 // This function is lost in the mists of time. It was originally
 // part of the long-dead `rsml` crate, but apparently in some branch
 // that never made it to `crates.io`. Who knows?
-fn get_unique_word_list(_post: &str) -> Vec<String> {
-    todo!()
+//
+// I will make a guess here.
+fn get_unique_word_list(post: &str) -> Vec<String> {
+    let mut words = BTreeSet::new();
+    for w in post.split_whitespace() {
+        words.insert(w.trim().to_owned());
+    }
+    words.into_iter().collect()
 }
 
 fn word_freqs(posts: &[RawPostFeatures]) -> BTreeMap<String, u64> {
